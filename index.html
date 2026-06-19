@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPM 180 節拍器 v1.0.5</title>
+    <title>BPM 180 節拍器 v1.0.6</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; }
         .timer-display { font-size: 60px; margin: 20px; font-weight: bold; color: #333; }
@@ -35,22 +35,22 @@
         <button class="btn-time" onclick="startMetronome(15)">15 分鐘</button>
         <button class="btn-time" onclick="startMetronome(20)">20 分鐘</button>
         <button class="btn-time" onclick="startMetronome(25)">25 分鐘</button>
-        <button class="btn-time" onclick="startMetronome(30)">30 分鐘</button>
+        <button class="btn-time" onclick="startMinMetronome(30)">30 分鐘</button>
     </div>
     <br>
     <button class="btn-control" id="pauseBtn" onclick="togglePause()">暫停 / 繼續</button>
     <button class="btn-stop" onclick="stopMetronome()">完全停止 (歸零)</button>
 
     <script>
-        // 版本號：1.0.5
+        // 版本號：1.0.6
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let metroInterval = null;
         let countdownInterval = null;
         let timeRemaining = 0;
-        let totalDuration = 0;
         let isPaused = false;
 
         function playClick() {
+            if (isPaused) return; // 確保暫停時不發聲
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -67,11 +67,10 @@
             stopMetronome();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            totalDuration = minutes * 60;
+            let totalDuration = minutes * 60;
             timeRemaining = totalDuration;
             isPaused = false;
             
-            // 計算預計結束時間
             const now = new Date();
             const end = new Date(now.getTime() + totalDuration * 1000);
             const endTimeStr = end.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
@@ -81,7 +80,11 @@
             
             updateDisplay();
 
-            metroInterval = setInterval(playClick, 333.33);
+            // 使用 setInterval 同步控制
+            metroInterval = setInterval(() => {
+                if (!isPaused) playClick();
+            }, 333.33);
+
             countdownInterval = setInterval(() => {
                 if (!isPaused) {
                     timeRemaining--;
@@ -92,7 +95,11 @@
         }
 
         function togglePause() {
-            if (timeRemaining > 0) isPaused = !isPaused;
+            if (timeRemaining > 0) {
+                isPaused = !isPaused;
+                // 如果是從暫停轉為繼續，確保 AudioContext 是開啟狀態
+                if (!isPaused && audioCtx.state === 'suspended') audioCtx.resume();
+            }
         }
 
         function stopMetronome() {
