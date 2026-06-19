@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>BPM 180 節拍器 v1.0.2</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        .indicator { width: 50px; height: 50px; border-radius: 50%; background: #ccc; margin: 10px auto; display: inline-block; transition: background 0.1s; }
+        .active { background: #ff4757; }
+        button { padding: 15px 30px; font-size: 20px; cursor: pointer; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>BPM 180 雙軌節拍器</h1>
+    <div>
+        <div id="led1" class="indicator"></div>
+        <div id="led2" class="indicator"></div>
+    </div>
+    <div style="margin-top:20px;">
+        <button onclick="startSync()">開始</button>
+        <button onclick="stopSync()">停止</button>
+    </div>
+
+    <script>
+        // 版本號：1.0.2
+        let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let timerID = null;
+        const bpm = 180;
+        const interval = 60 / bpm;
+
+        function playClick(ledId) {
+            const osc = audioCtx.createOscillator();
+            osc.connect(audioCtx.destination);
+            osc.frequency.value = (ledId === 'led1') ? 1000 : 800;
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+            
+            const led = document.getElementById(ledId);
+            led.classList.add('active');
+            setTimeout(() => led.classList.remove('active'), 50);
+        }
+
+        function startSync() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (timerID) return;
+            timerID = setInterval(() => {
+                playClick('led1');
+                playClick('led2');
+            }, interval * 1000);
+        }
+
+        function stopSync() {
+            clearInterval(timerID);
+            timerID = null;
+        }
+    </script>
+</body>
+</html>
