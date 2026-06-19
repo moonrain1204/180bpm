@@ -2,12 +2,26 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>BPM 180 節拍器與倒數計時 v1.0.3</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPM 180 節拍器 v1.0.4</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .timer-display { font-size: 30px; margin: 20px; font-weight: bold; }
-        button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
-        .btn-time { background-color: #e0e0e0; border: none; border-radius: 5px; }
+        .timer-display { font-size: 60px; margin: 30px; font-weight: bold; color: #333; }
+        /* 放大按鈕設計 */
+        button { 
+            padding: 25px 40px; 
+            font-size: 22px; 
+            margin: 10px; 
+            cursor: pointer; 
+            border-radius: 12px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            width: 80%;
+            max-width: 400px;
+        }
+        .btn-time { background-color: #f0f0f0; }
+        .btn-control { background-color: #4CAF50; color: white; border: none; }
+        .btn-stop { background-color: #ff4757; color: white; border: none; }
     </style>
 </head>
 <body>
@@ -15,28 +29,29 @@
     <div class="timer-display" id="timer">00:00</div>
     
     <div>
-        <button onclick="startMetronome(10)">10 分鐘</button>
-        <button onclick="startMetronome(15)">15 分鐘</button>
-        <button onclick="startMetronome(20)">20 分鐘</button>
-        <button onclick="startMetronome(25)">25 分鐘</button>
-        <button onclick="startMetronome(30)">30 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(10)">10 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(15)">15 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(20)">20 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(25)">25 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(30)">30 分鐘</button>
     </div>
     <br>
-    <button onclick="stopMetronome()" style="background-color: #ff4757; color: white;">停止</button>
+    <button class="btn-control" id="pauseBtn" onclick="togglePause()">暫停 / 繼續</button>
+    <button class="btn-stop" onclick="stopMetronome()">完全停止 (歸零)</button>
 
     <script>
-        // 版本號：1.0.3
+        // 版本號：1.0.4
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let metroInterval = null;
         let countdownInterval = null;
         let timeRemaining = 0;
+        let isPaused = false;
 
         function playClick() {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            // 調整音頻模擬您提供的節拍聲音色
             osc.type = 'square'; 
             osc.frequency.value = 440; 
             gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
@@ -50,20 +65,28 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
             timeRemaining = minutes * 60;
+            isPaused = false;
             updateDisplay();
 
-            metroInterval = setInterval(playClick, 333.33); // 180 BPM
+            metroInterval = setInterval(playClick, 333.33);
             countdownInterval = setInterval(() => {
-                timeRemaining--;
-                updateDisplay();
-                if (timeRemaining <= 0) stopMetronome();
+                if (!isPaused) {
+                    timeRemaining--;
+                    updateDisplay();
+                    if (timeRemaining <= 0) stopMetronome();
+                }
             }, 1000);
+        }
+
+        function togglePause() {
+            if (timeRemaining > 0) isPaused = !isPaused;
         }
 
         function stopMetronome() {
             clearInterval(metroInterval);
             clearInterval(countdownInterval);
             metroInterval = null;
+            isPaused = false;
             timeRemaining = 0;
             updateDisplay();
         }
