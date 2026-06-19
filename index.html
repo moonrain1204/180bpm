@@ -2,56 +2,77 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>BPM 180 節拍器 v1.0.2</title>
+    <title>BPM 180 節拍器與倒數計時 v1.0.3</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        .indicator { width: 50px; height: 50px; border-radius: 50%; background: #ccc; margin: 10px auto; display: inline-block; transition: background 0.1s; }
-        .active { background: #ff4757; }
-        button { padding: 15px 30px; font-size: 20px; cursor: pointer; margin: 10px; }
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        .timer-display { font-size: 30px; margin: 20px; font-weight: bold; }
+        button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; }
+        .btn-time { background-color: #e0e0e0; border: none; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <h1>BPM 180 雙軌節拍器</h1>
+    <h1>BPM 180 節拍器</h1>
+    <div class="timer-display" id="timer">00:00</div>
+    
     <div>
-        <div id="led1" class="indicator"></div>
-        <div id="led2" class="indicator"></div>
+        <button onclick="startMetronome(10)">10 分鐘</button>
+        <button onclick="startMetronome(15)">15 分鐘</button>
+        <button onclick="startMetronome(20)">20 分鐘</button>
+        <button onclick="startMetronome(25)">25 分鐘</button>
+        <button onclick="startMetronome(30)">30 分鐘</button>
     </div>
-    <div style="margin-top:20px;">
-        <button onclick="startSync()">開始</button>
-        <button onclick="stopSync()">停止</button>
-    </div>
+    <br>
+    <button onclick="stopMetronome()" style="background-color: #ff4757; color: white;">停止</button>
 
     <script>
-        // 版本號：1.0.2
+        // 版本號：1.0.3
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let timerID = null;
-        const bpm = 180;
-        const interval = 60 / bpm;
+        let metroInterval = null;
+        let countdownInterval = null;
+        let timeRemaining = 0;
 
-        function playClick(ledId) {
+        function playClick() {
             const osc = audioCtx.createOscillator();
-            osc.connect(audioCtx.destination);
-            osc.frequency.value = (ledId === 'led1') ? 1000 : 800;
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            // 調整音頻模擬您提供的節拍聲音色
+            osc.type = 'square'; 
+            osc.frequency.value = 440; 
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
             osc.start();
             osc.stop(audioCtx.currentTime + 0.05);
-            
-            const led = document.getElementById(ledId);
-            led.classList.add('active');
-            setTimeout(() => led.classList.remove('active'), 50);
         }
 
-        function startSync() {
+        function startMetronome(minutes) {
+            stopMetronome();
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            if (timerID) return;
-            timerID = setInterval(() => {
-                playClick('led1');
-                playClick('led2');
-            }, interval * 1000);
+            
+            timeRemaining = minutes * 60;
+            updateDisplay();
+
+            metroInterval = setInterval(playClick, 333.33); // 180 BPM
+            countdownInterval = setInterval(() => {
+                timeRemaining--;
+                updateDisplay();
+                if (timeRemaining <= 0) stopMetronome();
+            }, 1000);
         }
 
-        function stopSync() {
-            clearInterval(timerID);
-            timerID = null;
+        function stopMetronome() {
+            clearInterval(metroInterval);
+            clearInterval(countdownInterval);
+            metroInterval = null;
+            timeRemaining = 0;
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const m = Math.floor(timeRemaining / 60);
+            const s = timeRemaining % 60;
+            document.getElementById('timer').innerText = 
+                `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         }
     </script>
 </body>
