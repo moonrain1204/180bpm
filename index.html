@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPM 180 節拍器 v1.0.4</title>
+    <title>BPM 180 節拍器 v1.0.5</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; }
-        .timer-display { font-size: 60px; margin: 30px; font-weight: bold; color: #333; }
-        /* 放大按鈕設計 */
+        .timer-display { font-size: 60px; margin: 20px; font-weight: bold; color: #333; }
+        .info-panel { font-size: 18px; color: #555; margin-bottom: 10px; }
         button { 
             padding: 25px 40px; 
             font-size: 22px; 
@@ -26,6 +26,8 @@
 </head>
 <body>
     <h1>BPM 180 節拍器</h1>
+    <div class="info-panel" id="totalTime">設定時長：--</div>
+    <div class="info-panel" id="endTime">預計結束時間：--</div>
     <div class="timer-display" id="timer">00:00</div>
     
     <div>
@@ -40,11 +42,12 @@
     <button class="btn-stop" onclick="stopMetronome()">完全停止 (歸零)</button>
 
     <script>
-        // 版本號：1.0.4
+        // 版本號：1.0.5
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let metroInterval = null;
         let countdownInterval = null;
         let timeRemaining = 0;
+        let totalDuration = 0;
         let isPaused = false;
 
         function playClick() {
@@ -64,8 +67,18 @@
             stopMetronome();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            timeRemaining = minutes * 60;
+            totalDuration = minutes * 60;
+            timeRemaining = totalDuration;
             isPaused = false;
+            
+            // 計算預計結束時間
+            const now = new Date();
+            const end = new Date(now.getTime() + totalDuration * 1000);
+            const endTimeStr = end.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+            
+            document.getElementById('totalTime').innerText = `總時長：${minutes} 分鐘`;
+            document.getElementById('endTime').innerText = `預計結束時間：${endTimeStr}`;
+            
             updateDisplay();
 
             metroInterval = setInterval(playClick, 333.33);
@@ -88,6 +101,8 @@
             metroInterval = null;
             isPaused = false;
             timeRemaining = 0;
+            document.getElementById('totalTime').innerText = `設定時長：--`;
+            document.getElementById('endTime').innerText = `預計結束時間：--`;
             updateDisplay();
         }
 
