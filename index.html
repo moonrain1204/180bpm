@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BPM 180 節拍器 v1.0.6</title>
+    <title>BPM 180 節拍器 v1.0.7</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; }
         .timer-display { font-size: 60px; margin: 20px; font-weight: bold; color: #333; }
         .info-panel { font-size: 18px; color: #555; margin-bottom: 10px; }
         button { 
-            padding: 25px 40px; 
-            font-size: 22px; 
-            margin: 10px; 
+            padding: 20px 30px; 
+            font-size: 20px; 
+            margin: 8px; 
             cursor: pointer; 
             border-radius: 12px;
             border: 1px solid #ccc;
             background-color: #fff;
-            width: 80%;
-            max-width: 400px;
+            width: 40%;
+            max-width: 200px;
         }
         .btn-time { background-color: #f0f0f0; }
-        .btn-control { background-color: #4CAF50; color: white; border: none; }
-        .btn-stop { background-color: #ff4757; color: white; border: none; }
+        .btn-control { background-color: #4CAF50; color: white; border: none; width: 85%; max-width: 400px; }
+        .btn-stop { background-color: #ff4757; color: white; border: none; width: 85%; max-width: 400px; }
     </style>
 </head>
 <body>
@@ -31,18 +31,20 @@
     <div class="timer-display" id="timer">00:00</div>
     
     <div>
-        <button class="btn-time" onclick="startMetronome(10)">10 分鐘</button>
-        <button class="btn-time" onclick="startMetronome(15)">15 分鐘</button>
-        <button class="btn-time" onclick="startMetronome(20)">20 分鐘</button>
-        <button class="btn-time" onclick="startMetronome(25)">25 分鐘</button>
-        <button class="btn-time" onclick="startMinMetronome(30)">30 分鐘</button>
+        <button class="btn-time" onclick="startMetronome(10)">10 分</button>
+        <button class="btn-time" onclick="startMetronome(15)">15 分</button>
+        <button class="btn-time" onclick="startMetronome(20)">20 分</button>
+        <button class="btn-time" onclick="startMetronome(25)">25 分</button>
+        <button class="btn-time" onclick="startMetronome(30)">30 分</button>
+        <button class="btn-time" onclick="startMetronome(45)">45 分</button>
+        <button class="btn-time" onclick="startMetronome(60)">60 分</button>
     </div>
     <br>
     <button class="btn-control" id="pauseBtn" onclick="togglePause()">暫停 / 繼續</button>
     <button class="btn-stop" onclick="stopMetronome()">完全停止 (歸零)</button>
 
     <script>
-        // 版本號：1.0.6
+        // 版本號：1.0.7
         let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let metroInterval = null;
         let countdownInterval = null;
@@ -50,7 +52,7 @@
         let isPaused = false;
 
         function playClick() {
-            if (isPaused) return; // 確保暫停時不發聲
+            if (isPaused) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -80,7 +82,6 @@
             
             updateDisplay();
 
-            // 使用 setInterval 同步控制
             metroInterval = setInterval(() => {
                 if (!isPaused) playClick();
             }, 333.33);
@@ -97,7 +98,6 @@
         function togglePause() {
             if (timeRemaining > 0) {
                 isPaused = !isPaused;
-                // 如果是從暫停轉為繼續，確保 AudioContext 是開啟狀態
                 if (!isPaused && audioCtx.state === 'suspended') audioCtx.resume();
             }
         }
